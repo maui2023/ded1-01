@@ -1,0 +1,1932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AuraGantt — Interactive Dashboard Mockup</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Color Palette & Custom Tokens matching Jetpack Compose */
+        :root {
+            --bg-dark: #070a13;
+            --surface-sidebar: #0f1322;
+            --surface-panel: rgba(15, 23, 42, 0.45);
+            --surface-panel-elevated: rgba(30, 41, 59, 0.7);
+            --border-glow: rgba(255, 255, 255, 0.08);
+            --border-glow-active: rgba(255, 255, 255, 0.2);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            
+            /* Neon color accents */
+            --neon-violet: #8b5cf6;
+            --neon-pink: #ec4899;
+            --neon-blue: #3b82f6;
+            --neon-green: #10b981;
+            --neon-amber: #f59e0b;
+            --neon-indigo: #6366f1;
+
+            --font-display: 'Outfit', sans-serif;
+            --font-body: 'Plus Jakarta Sans', sans-serif;
+            --font-mono: 'Fira Code', monospace;
+            
+            --transition-smooth: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* Resets */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Ambient Glow Filters */
+        .ambient-glow {
+            position: absolute;
+            width: 450px;
+            height: 450px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+            filter: blur(130px);
+            opacity: 0.08;
+        }
+        .glow-violet {
+            background: var(--neon-violet);
+            top: 10%;
+            right: 20%;
+        }
+        .glow-pink {
+            background: var(--neon-pink);
+            bottom: 10%;
+            left: 30%;
+        }
+
+        /* Sidebar Styling */
+        aside.sidebar {
+            width: 280px;
+            background-color: var(--surface-sidebar);
+            border-right: 1px solid var(--border-glow);
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            z-index: 10;
+            flex-shrink: 0;
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 36px;
+            text-decoration: none;
+            color: white;
+        }
+        .logo-icon {
+            width: 34px;
+            height: 34px;
+            background: linear-gradient(135deg, var(--neon-violet), var(--neon-pink));
+            border-radius: 10px;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+        }
+        .logo-icon::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 4px;
+            background: white;
+            border-radius: 2px;
+            top: 15px;
+            left: 9px;
+            box-shadow: 0 6px 0 white, 0 -6px 0 white;
+        }
+        .logo-text {
+            font-family: var(--font-display);
+            font-size: 1.45rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ffffff 40%, #c084fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .section-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 16px;
+        }
+
+        .project-list {
+            list-style: none;
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 24px;
+            padding-right: 4px;
+        }
+        .project-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        .project-list::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+        }
+
+        .project-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.04);
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            position: relative;
+        }
+        .project-item:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.08);
+        }
+        .project-item.active {
+            background: rgba(139, 92, 246, 0.12);
+            border-color: rgba(139, 92, 246, 0.35);
+        }
+        .project-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 25%;
+            height: 50%;
+            width: 4px;
+            background: var(--neon-pink);
+            border-top-right-radius: 4px;
+            border-bottom-right-radius: 4px;
+        }
+        .project-name {
+            font-size: 0.88rem;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 80%;
+        }
+        .btn-delete-project {
+            opacity: 0;
+            background: transparent;
+            border: none;
+            color: #ef4444;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            padding: 4px;
+            border-radius: 4px;
+        }
+        .project-item:hover .btn-delete-project {
+            opacity: 1;
+        }
+        .btn-delete-project:hover {
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        /* Sidebar Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-family: var(--font-body);
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            gap: 8px;
+            border: none;
+        }
+        .btn-sidebar-add {
+            background: linear-gradient(135deg, var(--neon-violet), var(--neon-pink));
+            color: white;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.2);
+        }
+        .btn-sidebar-add:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+        }
+
+        /* Main Content Container */
+        main.main-content {
+            flex: 1;
+            padding: 40px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 2;
+        }
+        @media(max-width: 768px) {
+            main.main-content { padding: 24px; }
+        }
+
+        /* Dashboard Header */
+        header.dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 32px;
+            flex-shrink: 0;
+        }
+        @media(max-width: 992px) {
+            header.dashboard-header {
+                flex-direction: column;
+                gap: 20px;
+            }
+        }
+        
+        .project-info h1 {
+            font-family: var(--font-display);
+            font-size: 2.25rem;
+            font-weight: 800;
+            background: linear-gradient(to right, #ffffff, #e2e8f0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 6px;
+        }
+        .project-info p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            max-width: 600px;
+        }
+
+        .dashboard-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        
+        .zoom-controls {
+            display: flex;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border-glow);
+            border-radius: 10px;
+            padding: 3px;
+        }
+        .zoom-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-family: var(--font-body);
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+        .zoom-btn.active {
+            background: var(--neon-violet);
+            color: white;
+            box-shadow: 0 4px 10px rgba(139, 92, 246, 0.3);
+        }
+
+        .btn-add-task {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border-glow);
+            color: white;
+        }
+        .btn-add-task:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: var(--border-glow-active);
+        }
+
+        .btn-export {
+            background: linear-gradient(135deg, var(--neon-violet), var(--neon-pink));
+            color: white;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.2);
+        }
+        .btn-export:hover {
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+        }
+
+        /* Gantt Chart Container */
+        .gantt-panel {
+            flex: 1;
+            background: var(--surface-panel);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--border-glow);
+            border-radius: 24px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .gantt-scrollable-container {
+            flex: 1;
+            overflow: auto;
+            padding: 24px;
+        }
+        
+        .gantt-grid {
+            display: grid;
+            /* Column templates will be updated dynamically via JS depending on zoom level */
+            row-gap: 16px;
+            column-gap: 4px;
+            align-items: center;
+        }
+
+        .gantt-grid-header {
+            display: contents;
+        }
+        .header-spacer {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .grid-header-cell {
+            text-align: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            background: rgba(255,255,255,0.01);
+            border: 1px solid rgba(255,255,255,0.03);
+            border-radius: 6px;
+            padding: 8px 4px;
+            min-width: 44px;
+        }
+
+        /* Task Row Elements */
+        .gantt-task-row {
+            display: contents;
+        }
+        .task-meta-cell {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-right: 16px;
+            border-right: 1px solid var(--border-glow);
+            height: 48px;
+        }
+        .task-title-group {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            overflow: hidden;
+            width: 75%;
+        }
+        .task-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .task-phase-badge {
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .task-actions {
+            display: flex;
+            gap: 4px;
+            opacity: 0;
+            transition: var(--transition-smooth);
+        }
+        .gantt-task-row:hover .task-actions {
+            opacity: 1;
+        }
+        .task-action-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 6px;
+            transition: var(--transition-smooth);
+        }
+        .task-action-btn:hover {
+            color: white;
+            background: rgba(255,255,255,0.06);
+        }
+        
+        .bar-grid-container {
+            display: flex;
+            align-items: center;
+            height: 48px;
+            position: relative;
+        }
+        .task-timeline-bar {
+            width: 100%;
+            height: 34px;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            animation: barStretch 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .task-timeline-bar:hover {
+            transform: scaleY(1.06);
+            filter: brightness(1.08);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+        }
+        
+        .task-bar-progress {
+            height: 100%;
+            background: rgba(255, 255, 255, 0.18);
+            position: absolute;
+            left: 0;
+            top: 0;
+            border-right: 1px solid rgba(255, 255, 255, 0.25);
+        }
+        .task-bar-text {
+            position: relative;
+            z-index: 2;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: white;
+            margin-left: 12px;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+        }
+        
+        @keyframes barStretch {
+            from { transform: scaleX(0); opacity: 0; }
+            to { transform: scaleX(1); opacity: 1; }
+        }
+
+        /* Empty State */
+        .empty-dashboard-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 80px 40px;
+        }
+        .empty-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 0 15px rgba(139, 92, 246, 0.3));
+        }
+        .empty-dashboard-state h2 {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        .empty-dashboard-state p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 24px;
+            max-width: 320px;
+        }
+
+        /* Modal Dialog Styling (Using Native dialog & allow-discrete transitions) */
+        dialog {
+            margin: auto;
+            border-radius: 20px;
+            background: var(--surface-panel-elevated);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--border-glow);
+            padding: 32px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 30px 70px rgba(0,0,0,0.8);
+            color: var(--text-primary);
+            outline: none;
+            
+            /* Entry transitions */
+            opacity: 0;
+            transform: scale(0.9);
+            transition-property: opacity, transform, display, overlay;
+            transition-duration: 0.3s;
+            transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+            transition-behavior: allow-discrete;
+        }
+        
+        dialog[open] {
+            opacity: 1;
+            transform: scale(1);
+            
+            @starting-style {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+        }
+
+        dialog::backdrop {
+            background-color: rgba(0, 0, 0, 0);
+            transition:
+                display 0.3s allow-discrete,
+                overlay 0.3s allow-discrete,
+                background-color 0.3s ease-out;
+        }
+
+        dialog[open]::backdrop {
+            background-color: rgba(5, 7, 13, 0.75);
+
+            @starting-style {
+                background-color: rgba(0, 0, 0, 0);
+            }
+        }
+
+        /* Reduced Motion Fallback */
+        @media (prefers-reduced-motion: reduce) {
+            dialog {
+                transform: none;
+                transition-duration: 0.1s;
+            }
+            @starting-style {
+                dialog[open] { transform: none; }
+            }
+        }
+
+        .modal-header {
+            margin-bottom: 24px;
+        }
+        .modal-title {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        
+        label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        input[type="text"],
+        textarea,
+        select {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border-glow);
+            border-radius: 10px;
+            color: white;
+            padding: 12px 16px;
+            font-family: var(--font-body);
+            font-size: 0.9rem;
+            transition: var(--transition-smooth);
+            outline: none;
+        }
+        
+        input[type="text"]:focus,
+        textarea:focus,
+        select:focus {
+            border-color: rgba(139, 92, 246, 0.5);
+            background: rgba(255,255,255,0.05);
+            box-shadow: 0 0 10px rgba(139, 92, 246, 0.15);
+        }
+        
+        /* Custom Progress Range Slider */
+        .range-container {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        input[type="range"] {
+            flex: 1;
+            accent-color: var(--neon-violet);
+            height: 6px;
+            border-radius: 3px;
+        }
+        .range-val {
+            font-size: 0.95rem;
+            font-weight: 700;
+            width: 45px;
+            text-align: right;
+        }
+
+        /* Color presets selection */
+        .color-presets {
+            display: flex;
+            gap: 10px;
+            margin-top: 4px;
+        }
+        .color-swatch {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: var(--transition-smooth);
+        }
+        .color-swatch:hover {
+            transform: scale(1.15);
+        }
+        .color-swatch.selected {
+            border-color: white;
+            box-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 32px;
+        }
+        .btn-dialog-cancel {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border-glow);
+            color: var(--text-secondary);
+        }
+        .btn-dialog-cancel:hover {
+            color: white;
+            background: rgba(255,255,255,0.06);
+        }
+        .btn-dialog-save {
+            background: linear-gradient(135deg, var(--neon-violet), var(--neon-pink));
+            color: white;
+        }
+        .btn-dialog-save:hover {
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+        }
+        .btn-dialog-delete {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            margin-right: auto;
+        }
+        .btn-dialog-delete:hover {
+            background: rgba(239, 68, 68, 0.25);
+        }
+
+        /* Export Dialog Specifics */
+        #exportDialog {
+            max-width: 650px;
+        }
+        .export-modes {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .export-mode-card {
+            flex: 1;
+            padding: 16px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.05);
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .export-mode-card:hover {
+            background: rgba(255,255,255,0.04);
+            border-color: rgba(255,255,255,0.08);
+        }
+        .export-mode-card.active {
+            border-color: var(--neon-violet);
+            background: rgba(139,92,246,0.08);
+        }
+        .export-mode-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+        .export-mode-desc {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+        
+        .code-box-wrapper {
+            position: relative;
+            background: #090d16;
+            border: 1px solid var(--border-glow);
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        .code-box {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: #e2e8f0;
+            padding: 20px;
+            height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .btn-copy-code {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+        .btn-copy-code:hover {
+            background: rgba(255,255,255,0.12);
+        }
+
+        /* Export Progress Bar */
+        .simulation-container {
+            display: none;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border-glow);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+        .simulation-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .simulation-track {
+            height: 8px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .simulation-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--neon-violet), var(--neon-pink));
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+
+        /* Toast notifications */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--surface-panel-elevated);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            z-index: 1000;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transform: translateY(150px);
+            opacity: 0;
+            transition: var(--transition-smooth);
+        }
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .toast-icon {
+            color: var(--neon-green);
+        }
+
+        /* Sidebar Overlay */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(5, 7, 13, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 99;
+            opacity: 0;
+            pointer-events: none;
+            transition: var(--transition-smooth);
+        }
+        .sidebar-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Sidebar Close Button */
+        .sidebar-close-btn {
+            display: none;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 2rem;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            line-height: 1;
+            padding: 4px;
+        }
+        .sidebar-close-btn:hover {
+            color: white;
+        }
+
+        /* Menu Toggle Button */
+        .menu-toggle {
+            display: none;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-glow);
+            color: white;
+            border-radius: 8px;
+            padding: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition-smooth);
+        }
+        .menu-toggle:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--border-glow-active);
+        }
+
+        /* Mobile Responsive Sidebar Overrides */
+        @media (max-width: 768px) {
+            .menu-toggle {
+                display: inline-flex;
+            }
+            .sidebar-close-btn {
+                display: block;
+            }
+            aside.sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                height: 100vh;
+                z-index: 100;
+                transform: translateX(-100%);
+                transition: var(--transition-smooth);
+                box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+            }
+            aside.sidebar.active {
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Ambient Glows -->
+    <div class="ambient-glow glow-violet"></div>
+    <div class="ambient-glow glow-pink"></div>
+
+    <!-- Sidebar Overlay for mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Sidebar Left -->
+    <aside class="sidebar" id="sidebar">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 36px; width: 100%;">
+            <a href="index.html" class="logo-container" style="margin-bottom: 0;">
+                <div class="logo-icon"></div>
+                <div class="logo-text">AuraGantt</div>
+            </a>
+            <button class="sidebar-close-btn" id="btnSidebarClose" aria-label="Close Menu">&times;</button>
+        </div>
+
+        <div class="section-label">Projects</div>
+        <ul class="project-list" id="projectList">
+            <!-- Populated via Javascript -->
+        </ul>
+
+        <button class="btn btn-sidebar-add" id="btnNewProject">+ Create Project</button>
+    </aside>
+
+    <!-- Main Board Right -->
+    <main class="main-content">
+        <header class="dashboard-header">
+            <div class="project-info" id="projectInfo">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <button class="menu-toggle" id="btnMenuToggle" aria-label="Toggle Menu">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="3" y1="12" x2="21" y2="12"></line>
+                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                            <line x1="3" y1="18" x2="21" y2="18"></line>
+                        </svg>
+                    </button>
+                    <h1 id="currentProjectTitle">Interactive HTML Proposal</h1>
+                </div>
+                <p id="currentProjectDesc">Proposal Gantt chart styling system using modern CSS grids, premium gradients, and export modules.</p>
+            </div>
+            
+            <div class="dashboard-actions">
+                <div class="zoom-controls">
+                    <button class="zoom-btn active" data-zoom="Daily">Daily</button>
+                    <button class="zoom-btn" data-zoom="Weekly">Weekly</button>
+                </div>
+                <button class="btn btn-add-task" id="btnAddTask">+ Add Task</button>
+                <button class="btn btn-export" id="btnExport">Export Center</button>
+            </div>
+        </header>
+
+        <!-- Gantt chart Board Canvas -->
+        <section class="gantt-panel">
+            <div class="gantt-scrollable-container">
+                <div class="gantt-grid" id="ganttGrid">
+                    <!-- Populated dynamically via JavaScript -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal 1: Create Project -->
+    <dialog id="projectModal">
+        <div class="modal-header">
+            <h2 class="modal-title">Create Project</h2>
+        </div>
+        <form method="dialog" id="projectForm">
+            <div class="form-group">
+                <label for="newProjectName">Project Name</label>
+                <input type="text" id="newProjectName" placeholder="e.g., Client Marketing Audit" required>
+            </div>
+            <div class="form-group">
+                <label for="newProjectDesc">Description</label>
+                <textarea id="newProjectDesc" rows="3" placeholder="Define the timeline scope and deliverables..."></textarea>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-dialog-cancel" id="btnCancelProject">Cancel</button>
+                <button type="submit" class="btn btn-dialog-save">Create Project</button>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- Modal 2: Add/Edit Task -->
+    <dialog id="taskModal">
+        <div class="modal-header">
+            <h2 class="modal-title" id="taskModalTitle">Add Task</h2>
+        </div>
+        <form method="dialog" id="taskForm">
+            <input type="hidden" id="editTaskId">
+            
+            <div class="form-group">
+                <label for="taskTitleInput">Task Title</label>
+                <input type="text" id="taskTitleInput" placeholder="e.g., User Research Focus Groups" required>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="taskPhaseSelect">Phase</label>
+                    <select id="taskPhaseSelect">
+                        <option value="Strategy">Strategy</option>
+                        <option value="Design">Design</option>
+                        <option value="Development">Development</option>
+                        <option value="Launch">Launch</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="taskColorInput">Accent Theme</label>
+                    <div class="color-presets" id="colorPresets">
+                        <!-- Filled by JS -->
+                    </div>
+                    <input type="hidden" id="taskColorInput" value="#6366F1">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="taskStartInput">Start Offset (Days)</label>
+                    <input type="text" id="taskStartInput" value="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="taskDurationInput">Duration (Days)</label>
+                    <input type="text" id="taskDurationInput" value="5" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="taskProgressInput">Progress Completion</label>
+                <div class="range-container">
+                    <input type="range" id="taskProgressInput" min="0" max="100" value="0">
+                    <span class="range-val" id="taskProgressVal">0%</span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="taskDependencySelect">Dependent On</label>
+                <select id="taskDependencySelect">
+                    <option value="">None (Standalone)</option>
+                    <!-- Filled dynamically with other tasks -->
+                </select>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn btn-dialog-delete" id="btnDeleteTask">Delete</button>
+                <button type="button" class="btn btn-dialog-cancel" id="btnCancelTask">Cancel</button>
+                <button type="submit" class="btn btn-dialog-save">Save Task</button>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- Modal 3: Export Center -->
+    <dialog id="exportDialog">
+        <div class="modal-header">
+            <h2 class="modal-title">Export Proposal Center</h2>
+        </div>
+        
+        <div class="export-modes">
+            <div class="export-mode-card active" data-type="HTML">
+                <span class="export-mode-title">HTML Standalone</span>
+                <span class="export-mode-desc">Export fully self-contained HTML/CSS source ready to email.</span>
+            </div>
+            <div class="export-mode-card" data-type="PDF">
+                <span class="export-mode-title">PDF Print Sheet</span>
+                <span class="export-mode-desc">A4-aligned styling rules ready for browser PDF printers.</span>
+            </div>
+        </div>
+
+        <div class="simulation-container" id="exportProgressContainer">
+            <div class="simulation-title" id="exportProgressTitle">Generating Export Pack...</div>
+            <div class="simulation-track">
+                <div class="simulation-bar" id="exportProgressBar"></div>
+            </div>
+        </div>
+
+        <div class="code-box-wrapper" id="codeWrapper">
+            <button class="btn-copy-code" id="btnCopyCode">Copy Source</button>
+            <div class="code-box" id="exportCodeBlock"></div>
+        </div>
+
+        <div class="modal-actions">
+            <button type="button" class="btn btn-dialog-cancel" id="btnCancelExport">Close</button>
+            <button type="button" class="btn btn-export" id="btnRunExport">Generate & Download</button>
+        </div>
+    </dialog>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="completionToast">
+        <svg class="toast-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+        <span id="toastMessage">Copied code to clipboard!</span>
+    </div>
+
+    <!-- Application Script -->
+    <script>
+        // Preset Color Swatches Mapping
+        const colorPresetsList = [
+            { hex: "#6366F1", name: "Indigo" },
+            { hex: "#8B5CF6", name: "Violet" },
+            { hex: "#EC4899", name: "Pink" },
+            { hex: "#3B82F6", name: "Blue" },
+            { hex: "#10B981", name: "Green" },
+            { hex: "#F59E0B", name: "Amber" }
+        ];
+
+        // State Store
+        let state = {
+            projects: [],
+            tasks: [],
+            selectedProjectId: null,
+            zoomLevel: "Daily", // "Daily" or "Weekly"
+            selectedColorHex: "#6366F1",
+            exportType: "HTML"
+        };
+
+        // Initialize state from LocalStorage or seed data
+        function initState() {
+            const cachedProjects = localStorage.getItem("gantt_projects");
+            const cachedTasks = localStorage.getItem("gantt_tasks");
+
+            if (cachedProjects && cachedTasks) {
+                state.projects = JSON.parse(cachedProjects);
+                state.tasks = JSON.parse(cachedTasks);
+                if (state.projects.length > 0) {
+                    state.selectedProjectId = state.projects[0].id;
+                }
+            } else {
+                // Seed mock projects
+                state.projects = [
+                    {
+                        id: 1,
+                        name: "Interactive HTML Proposal",
+                        description: "Proposal Gantt chart styling system using modern CSS grids, premium gradients, and export modules."
+                    },
+                    {
+                        id: 2,
+                        name: "Mobile App Design System",
+                        description: "Developing custom Jetpack Compose themes, component tokens, and fluid typography sheets."
+                    }
+                ];
+
+                state.tasks = [
+                    // Project 1 Tasks
+                    { id: 1, projectId: 1, title: "Discovery & Project Kickoff", phase: "Strategy", startDayOffset: 0, durationDays: 4, progress: 1.0, colorHex: "#6366F1" },
+                    { id: 2, projectId: 1, title: "User Experience Architecture", phase: "Design", startDayOffset: 3, durationDays: 6, progress: 1.0, colorHex: "#8B5CF6" },
+                    { id: 3, projectId: 1, title: "UI Moodboards & Gradients", phase: "Design", startDayOffset: 6, durationDays: 5, progress: 0.85, colorHex: "#EC4899" },
+                    { id: 4, projectId: 1, title: "Front-end Flexbox Framework", phase: "Development", startDayOffset: 10, durationDays: 8, progress: 0.60, colorHex: "#3B82F6" },
+                    { id: 5, projectId: 1, title: "PDF Rendering Engine Setup", phase: "Development", startDayOffset: 15, durationDays: 7, progress: 0.25, colorHex: "#10B981" },
+                    { id: 6, projectId: 1, title: "Client Sandbox Deployment", phase: "Launch", startDayOffset: 21, durationDays: 5, progress: 0.0, colorHex: "#F59E0B" },
+
+                    // Project 2 Tasks
+                    { id: 7, projectId: 2, title: "Compose Typography Hierarchy", phase: "Design", startDayOffset: 0, durationDays: 5, progress: 1.0, colorHex: "#8B5CF6" },
+                    { id: 8, projectId: 2, title: "Glassmorphic Surface Design", phase: "Design", startDayOffset: 4, durationDays: 6, progress: 0.90, colorHex: "#EC4899" },
+                    { id: 9, projectId: 2, title: "M3 Component Tokens", phase: "Development", startDayOffset: 9, durationDays: 8, progress: 0.50, colorHex: "#3B82F6" },
+                    { id: 10, projectId: 2, title: "Interactive Motion Prototyping", phase: "Development", startDayOffset: 15, durationDays: 7, progress: 0.10, colorHex: "#10B981" }
+                ];
+                state.selectedProjectId = 1;
+                saveStateToStorage();
+            }
+        }
+
+        function saveStateToStorage() {
+            localStorage.setItem("gantt_projects", JSON.stringify(state.projects));
+            localStorage.setItem("gantt_tasks", JSON.stringify(state.tasks));
+        }
+
+        // DOM Elements Queries
+        const projectListEl = document.getElementById("projectList");
+        const ganttGridEl = document.getElementById("ganttGrid");
+        const currentProjectTitleEl = document.getElementById("currentProjectTitle");
+        const currentProjectDescEl = document.getElementById("currentProjectDesc");
+        
+        // Modals Queries
+        const projectModal = document.getElementById("projectModal");
+        const taskModal = document.getElementById("taskModal");
+        const exportDialog = document.getElementById("exportDialog");
+        
+        // Modal buttons
+        const btnNewProject = document.getElementById("btnNewProject");
+        const btnCancelProject = document.getElementById("btnCancelProject");
+        const btnAddTask = document.getElementById("btnAddTask");
+        const btnCancelTask = document.getElementById("btnCancelTask");
+        const btnDeleteTask = document.getElementById("btnDeleteTask");
+        const btnExport = document.getElementById("btnExport");
+        const btnCancelExport = document.getElementById("btnCancelExport");
+        
+        // Render Project list sidebar
+        function renderProjectsSidebar() {
+            projectListEl.innerHTML = "";
+            state.projects.forEach(project => {
+                const li = document.createElement("li");
+                li.className = `project-item ${project.id === state.selectedProjectId ? 'active' : ''}`;
+                li.dataset.id = project.id;
+                
+                li.innerHTML = `
+                    <div class="project-name" title="${project.name}">${project.name}</div>
+                    <button class="btn-delete-project" title="Delete Project">&times;</button>
+                `;
+                
+                li.addEventListener("click", (e) => {
+                    if (e.target.classList.contains("btn-delete-project")) {
+                        e.stopPropagation();
+                        deleteProject(project.id);
+                    } else {
+                        selectProject(project.id);
+                    }
+                });
+                
+                projectListEl.appendChild(li);
+            });
+        }
+
+        function selectProject(id) {
+            state.selectedProjectId = id;
+            renderProjectsSidebar();
+            renderDashboard();
+
+            // Close mobile menu on project selection
+            document.getElementById("sidebar").classList.remove("active");
+            document.getElementById("sidebarOverlay").classList.remove("active");
+        }
+
+        function deleteProject(id) {
+            if (confirm("Are you sure you want to delete this project? This will remove all associated tasks.")) {
+                state.projects = state.projects.filter(p => p.id !== id);
+                state.tasks = state.tasks.filter(t => t.projectId !== id);
+                
+                if (state.selectedProjectId === id) {
+                    state.selectedProjectId = state.projects.length > 0 ? state.projects[0].id : null;
+                }
+                saveStateToStorage();
+                renderProjectsSidebar();
+                renderDashboard();
+            }
+        }
+
+        // Render Dashboard canvas
+        function renderDashboard() {
+            const currentProject = state.projects.find(p => p.id === state.selectedProjectId);
+            
+            if (!currentProject) {
+                // Render Empty State
+                currentProjectTitleEl.textContent = "No Projects Found";
+                currentProjectDescEl.textContent = "Create a project to start planning your timeline.";
+                ganttGridEl.parentNode.innerHTML = `
+                    <div class="empty-dashboard-state">
+                        <div class="empty-icon">📂</div>
+                        <h2>Begin a new project</h2>
+                        <p>Create your first premium Gantt chart timeline to manage task delivery.</p>
+                        <button class="btn btn-sidebar-add" onclick="projectModal.showModal()">+ Create Project</button>
+                    </div>
+                `;
+                return;
+            }
+
+            // Ensure proper elements are mounted
+            let container = document.querySelector(".gantt-scrollable-container");
+            if (!document.getElementById("ganttGrid")) {
+                container.innerHTML = `<div class="gantt-grid" id="ganttGrid"></div>`;
+            }
+            const gridEl = document.getElementById("ganttGrid");
+
+            // Update Titles
+            currentProjectTitleEl.textContent = currentProject.name;
+            currentProjectDescEl.textContent = currentProject.description;
+
+            // Get current project tasks
+            const projectTasks = state.tasks.filter(t => t.projectId === currentProject.id);
+
+            // Calculate Grid Columns
+            let maxSpanDays = 15;
+            if (projectTasks.length > 0) {
+                maxSpanDays = Math.max(...projectTasks.map(t => t.startDayOffset + t.durationDays));
+                if (maxSpanDays < 15) maxSpanDays = 15;
+            }
+
+            // Set grid template columns: Column 1 is 180px, rest are 1fr (or fixed width for zoom scroll)
+            const zoomMultiplier = state.zoomLevel === "Daily" ? 1 : 1; 
+            const totalCols = maxSpanDays;
+            
+            gridEl.style.gridTemplateColumns = `180px repeat(${totalCols}, 1fr)`;
+            gridEl.innerHTML = "";
+
+            // 1. Grid Headers
+            const spacer = document.createElement("div");
+            spacer.className = "header-spacer";
+            spacer.textContent = "Timeline Tasks";
+            gridEl.appendChild(spacer);
+
+            for (let i = 1; i <= totalCols; i++) {
+                const headerCell = document.createElement("div");
+                headerCell.className = "grid-header-cell";
+                headerCell.textContent = state.zoomLevel === "Daily" ? `D${i}` : `W${i}`;
+                gridEl.appendChild(headerCell);
+            }
+
+            // 2. Add Task Rows
+            projectTasks.forEach(task => {
+                const row = document.createElement("div");
+                row.className = "gantt-task-row";
+
+                // Meta Info Cell (Title & Badge)
+                const metaCell = document.createElement("div");
+                metaCell.className = "task-meta-cell";
+                
+                metaCell.innerHTML = `
+                    <div class="task-title-group">
+                        <span class="task-title" title="${task.title}">${task.title}</span>
+                        <span class="task-phase-badge" style="color: ${task.colorHex}">${task.phase}</span>
+                    </div>
+                    <div class="task-actions">
+                        <button class="task-action-btn edit-btn" title="Edit Task">✏️</button>
+                        <button class="task-action-btn delete-btn" title="Delete Task">🗑️</button>
+                    </div>
+                `;
+
+                // Add Row Action Triggers
+                metaCell.querySelector(".edit-btn").addEventListener("click", () => openEditTaskModal(task));
+                metaCell.querySelector(".delete-btn").addEventListener("click", () => deleteTask(task.id));
+
+                row.appendChild(metaCell);
+
+                // Bar Cell (Gantt representation)
+                const barCell = document.createElement("div");
+                barCell.className = "bar-grid-container";
+                barCell.style.gridColumn = `2 / span ${totalCols}`;
+
+                // Positioning inside task bar wrapper
+                const startCol = task.startDayOffset + 1;
+                const colSpan = task.durationDays;
+                
+                const percentWidth = (colSpan / totalCols) * 100;
+                const percentOffset = ((startCol - 1) / totalCols) * 100;
+
+                const progressPercent = Math.round(task.progress * 100);
+
+                const bar = document.createElement("div");
+                bar.className = "task-timeline-bar";
+                bar.style.width = `${percentWidth}%`;
+                bar.style.marginLeft = `${percentOffset}%`;
+                bar.style.background = `linear-gradient(135deg, ${task.colorHex}, ${task.colorHex}dd)`;
+                
+                bar.innerHTML = `
+                    <div class="task-bar-progress" style="width: ${progressPercent}%;"></div>
+                    <span class="task-bar-text">${progressPercent}%</span>
+                `;
+
+                bar.addEventListener("click", () => openEditTaskModal(task));
+
+                barCell.appendChild(bar);
+                row.appendChild(barCell);
+
+                gridEl.appendChild(row);
+            });
+        }
+
+        // Toggle zoom level (Daily / Weekly)
+        const zoomBtns = document.querySelectorAll(".zoom-btn");
+        zoomBtns.forEach(btn => {
+            btn.addEventListener("click", () => {
+                zoomBtns.forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+                state.zoomLevel = btn.dataset.zoom;
+                renderDashboard();
+            });
+        });
+
+        // Add Project triggers
+        btnNewProject.addEventListener("click", () => {
+            document.getElementById("projectForm").reset();
+            projectModal.showModal();
+        });
+        btnCancelProject.addEventListener("click", () => projectModal.close());
+        
+        document.getElementById("projectForm").addEventListener("submit", (e) => {
+            const name = document.getElementById("newProjectName").value;
+            const desc = document.getElementById("newProjectDesc").value;
+            const newProj = {
+                id: Date.now(),
+                name,
+                description: desc
+            };
+            state.projects.push(newProj);
+            state.selectedProjectId = newProj.id;
+            
+            // Seed a default task for the project
+            state.tasks.push({
+                id: Date.now() + 1,
+                projectId: newProj.id,
+                title: "Project Setup & Scope Alignment",
+                phase: "Strategy",
+                startDayOffset: 0,
+                durationDays: 4,
+                progress: 0.5,
+                colorHex: "#6366F1"
+            });
+
+            saveStateToStorage();
+            renderProjectsSidebar();
+            renderDashboard();
+            projectModal.close();
+            showToast("Created project successfully!");
+        });
+
+        // Add / Edit Task Modal Utilities
+        function renderColorPresets(activeColorHex) {
+            const presetsContainer = document.getElementById("colorPresets");
+            presetsContainer.innerHTML = "";
+            colorPresetsList.forEach(preset => {
+                const swatch = document.createElement("div");
+                swatch.className = `color-swatch ${preset.hex.toLowerCase() === activeColorHex.toLowerCase() ? 'selected' : ''}`;
+                swatch.style.backgroundColor = preset.hex;
+                swatch.dataset.hex = preset.hex;
+                
+                swatch.addEventListener("click", () => {
+                    document.querySelectorAll(".color-swatch").forEach(s => s.classList.remove("selected"));
+                    swatch.classList.add("selected");
+                    document.getElementById("taskColorInput").value = preset.hex;
+                    state.selectedColorHex = preset.hex;
+                });
+                
+                presetsContainer.appendChild(swatch);
+            });
+            document.getElementById("taskColorInput").value = activeColorHex;
+            state.selectedColorHex = activeColorHex;
+        }
+
+        // Range slider text
+        const rangeSlider = document.getElementById("taskProgressInput");
+        const rangeValText = document.getElementById("taskProgressVal");
+        rangeSlider.addEventListener("input", (e) => {
+            rangeValText.textContent = `${e.target.value}%`;
+        });
+
+        // Open Dialog to Create new task
+        btnAddTask.addEventListener("click", () => {
+            if (!state.selectedProjectId) {
+                alert("Please select or create a project first.");
+                return;
+            }
+            document.getElementById("taskForm").reset();
+            document.getElementById("editTaskId").value = "";
+            document.getElementById("taskModalTitle").textContent = "Add Task";
+            rangeValText.textContent = "0%";
+            btnDeleteTask.style.display = "none";
+            
+            // Render color presets
+            renderColorPresets("#6366F1");
+
+            // Fill dependencies selection
+            populateDependencyDropdown(null);
+
+            taskModal.showModal();
+        });
+
+        function populateDependencyDropdown(currentTaskId) {
+            const selectEl = document.getElementById("taskDependencySelect");
+            selectEl.innerHTML = '<option value="">None (Standalone)</option>';
+            
+            const projectTasks = state.tasks.filter(t => t.projectId === state.selectedProjectId && t.id !== currentTaskId);
+            projectTasks.forEach(task => {
+                const opt = document.createElement("option");
+                opt.value = task.id;
+                opt.textContent = task.title;
+                selectEl.appendChild(opt);
+            });
+        }
+
+        // Open Dialog to Edit existing task
+        function openEditTaskModal(task) {
+            document.getElementById("editTaskId").value = task.id;
+            document.getElementById("taskTitleInput").value = task.title;
+            document.getElementById("taskPhaseSelect").value = task.phase;
+            document.getElementById("taskStartInput").value = task.startDayOffset;
+            document.getElementById("taskDurationInput").value = task.durationDays;
+            
+            const progressVal = Math.round(task.progress * 100);
+            rangeSlider.value = progressVal;
+            rangeValText.textContent = `${progressVal}%`;
+            
+            document.getElementById("taskModalTitle").textContent = "Edit Task";
+            btnDeleteTask.style.display = "block";
+
+            renderColorPresets(task.colorHex);
+            populateDependencyDropdown(task.id);
+            if (task.dependsOnTaskId) {
+                document.getElementById("taskDependencySelect").value = task.dependsOnTaskId;
+            }
+
+            taskModal.showModal();
+        }
+
+        btnCancelTask.addEventListener("click", () => taskModal.close());
+        
+        btnDeleteTask.addEventListener("click", () => {
+            const taskId = parseInt(document.getElementById("editTaskId").value);
+            if (taskId) {
+                deleteTask(taskId);
+                taskModal.close();
+            }
+        });
+
+        function deleteTask(id) {
+            if (confirm("Are you sure you want to delete this task?")) {
+                state.tasks = state.tasks.filter(t => t.id !== id);
+                saveStateToStorage();
+                renderDashboard();
+                showToast("Task deleted.");
+            }
+        }
+
+        // Form submit Save Task
+        document.getElementById("taskForm").addEventListener("submit", (e) => {
+            const taskId = document.getElementById("editTaskId").value;
+            const title = document.getElementById("taskTitleInput").value;
+            const phase = document.getElementById("taskPhaseSelect").value;
+            const start = parseInt(document.getElementById("taskStartInput").value) || 0;
+            const duration = parseInt(document.getElementById("taskDurationInput").value) || 1;
+            const progress = parseFloat(rangeSlider.value) / 100;
+            const colorHex = document.getElementById("taskColorInput").value;
+            const depSelectVal = document.getElementById("taskDependencySelect").value;
+            const dependsOnTaskId = depSelectVal ? parseInt(depSelectVal) : null;
+
+            if (taskId) {
+                // Update
+                const task = state.tasks.find(t => t.id === parseInt(taskId));
+                if (task) {
+                    task.title = title;
+                    task.phase = phase;
+                    task.startDayOffset = start;
+                    task.durationDays = duration;
+                    task.progress = progress;
+                    task.colorHex = colorHex;
+                    task.dependsOnTaskId = dependsOnTaskId;
+                }
+            } else {
+                // Insert
+                state.tasks.push({
+                    id: Date.now(),
+                    projectId: state.selectedProjectId,
+                    title,
+                    phase,
+                    startDayOffset: start,
+                    durationDays: duration,
+                    progress,
+                    colorHex,
+                    dependsOnTaskId
+                });
+            }
+
+            saveStateToStorage();
+            renderDashboard();
+            taskModal.close();
+            showToast("Saved task timeline.");
+        });
+
+        // Toast utils
+        function showToast(message) {
+            const toast = document.getElementById("completionToast");
+            document.getElementById("toastMessage").textContent = message;
+            toast.classList.add("show");
+            setTimeout(() => {
+                toast.classList.remove("show");
+            }, 3000);
+        }
+
+        // ==========================================
+        // EXPORT CODE GENERATOR SECTION
+        // ==========================================
+
+        btnExport.addEventListener("click", () => {
+            const currentProject = state.projects.find(p => p.id === state.selectedProjectId);
+            if (!currentProject) return;
+
+            // Generate HTML code
+            generateAndShowExportCode();
+            
+            // Hide progress container and reveal code block
+            document.getElementById("exportProgressContainer").style.display = "none";
+            document.getElementById("codeWrapper").style.display = "block";
+            exportDialog.showModal();
+        });
+
+        btnCancelExport.addEventListener("click", () => exportDialog.close());
+
+        // Toggle export styles card
+        const exportCards = document.querySelectorAll(".export-mode-card");
+        exportCards.forEach(card => {
+            card.addEventListener("click", () => {
+                exportCards.forEach(c => c.classList.remove("active"));
+                card.classList.add("active");
+                state.exportType = card.dataset.type;
+                generateAndShowExportCode();
+            });
+        });
+
+        function generateAndShowExportCode() {
+            const currentProject = state.projects.find(p => p.id === state.selectedProjectId);
+            const projectTasks = state.tasks.filter(t => t.projectId === state.selectedProjectId);
+            
+            const html = generateStandaloneExportCode(currentProject, projectTasks);
+            document.getElementById("exportCodeBlock").textContent = html;
+        }
+
+        // Copier
+        document.getElementById("btnCopyCode").addEventListener("click", () => {
+            const code = document.getElementById("exportCodeBlock").textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                showToast("Source code copied to clipboard!");
+            });
+        });
+
+        // Run simulated exporter
+        document.getElementById("btnRunExport").addEventListener("click", () => {
+            const container = document.getElementById("exportProgressContainer");
+            const progressBar = document.getElementById("exportProgressBar");
+            const codeWrapper = document.getElementById("codeWrapper");
+            
+            codeWrapper.style.display = "none";
+            container.style.display = "block";
+            
+            let percent = 0;
+            progressBar.style.width = "0%";
+            
+            const interval = setInterval(() => {
+                percent += 5;
+                progressBar.style.width = `${percent}%`;
+                
+                if (percent >= 100) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        exportDialog.close();
+                        showToast(`Successfully exported ${state.exportType} proposal bundle!`);
+                    }, 300);
+                }
+            }, 50);
+        });
+
+        // Standalone Export Code generator matching Kotlin app logic
+        function generateStandaloneExportCode(project, tasks) {
+            if (!project) return "<!-- No project active -->";
+
+            const maxDays = tasks.length === 0 ? 15 : Math.max(...tasks.map(t => t.startDayOffset + t.durationDays), 15);
+            const gridTemplate = `180px repeat(${maxDays}, 1fr)`;
+
+            let taskItemsHtml = "";
+            tasks.forEach((task, idx) => {
+                const startCol = task.startDayOffset + 2;
+                const endCol = startCol + task.durationDays;
+                const progressPercent = Math.round(task.progress * 100);
+                
+                taskItemsHtml += `
+            <!-- Task ${idx + 1}: ${task.title} -->
+            <div class="task-label">${task.title} <span class="phase-badge">${task.phase}</span></div>
+            <div class="gantt-bar-container" style="grid-column: ${startCol} / ${endCol};">
+                <div class="gantt-bar" style="background: linear-gradient(135deg, ${task.colorHex}, ${task.colorHex}dd);">
+                    <div class="gantt-progress" style="width: ${progressPercent}%;"></div>
+                    <span class="gantt-bar-text">${progressPercent}%</span>
+                </div>
+            </div>\n`;
+            });
+
+            let headerDaysHtml = "";
+            for (let i = 1; i <= maxDays; i++) {
+                headerDaysHtml += `            <div class="day-header">D${i}</div>\n`;
+            }
+
+            return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${project.name} - Gantt Chart Proposal</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0f172a, #1e1b4b);
+            --panel-bg: rgba(255, 255, 255, 0.03);
+            --panel-border: rgba(255, 255, 255, 0.08);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            margin: 0;
+            padding: 40px 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1100px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--panel-border);
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        header {
+            margin-bottom: 32px;
+            border-bottom: 1px solid var(--panel-border);
+            padding-bottom: 24px;
+        }
+
+        h1 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            margin: 0 0 8px 0;
+            background: linear-gradient(to right, #818cf8, #f472b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p {
+            color: var(--text-muted);
+            font-size: 1rem;
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        .gantt-chart {
+            display: grid;
+            grid-template-columns: ${gridTemplate};
+            row-gap: 16px;
+            column-gap: 4px;
+            overflow-x: auto;
+            padding-bottom: 16px;
+        }
+
+        .gantt-chart::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .gantt-chart::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 4px;
+        }
+
+        .gantt-chart::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        .gantt-chart::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .header-spacer {
+            grid-column: 1;
+            font-weight: 600;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            font-size: 0.85rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .day-header {
+            text-align: center;
+            padding: 8px 4px;
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            background: rgba(255, 255, 255, 0.01);
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .task-label {
+            grid-column: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            font-size: 0.95rem;
+            font-weight: 500;
+            padding-right: 16px;
+            border-right: 1px solid var(--panel-border);
+        }
+
+        .phase-badge {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #818cf8;
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .gantt-bar-container {
+            display: flex;
+            align-items: center;
+            padding: 4px 0;
+        }
+
+        .gantt-bar {
+            width: 100%;
+            height: 36px;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s ease;
+        }
+
+        .gantt-bar:hover {
+            transform: scaleY(1.04);
+        }
+
+        .gantt-progress {
+            height: 100%;
+            background: rgba(255, 255, 255, 0.18);
+            position: absolute;
+            left: 0;
+            top: 0;
+            border-right: 1px solid rgba(255, 255, 255, 0.25);
+        }
+
+        .gantt-bar-text {
+            position: relative;
+            z-index: 2;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-left: 12px;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+        }
+
+        @media print {
+            body {
+                background: #ffffff !important;
+                color: #0f172a !important;
+                padding: 0;
+            }
+            .container {
+                box-shadow: none !important;
+                border: none !important;
+                background: transparent !important;
+                padding: 0 !important;
+                backdrop-filter: none !important;
+            }
+            h1 {
+                background: none !important;
+                -webkit-text-fill-color: initial !important;
+                color: #0f172a !important;
+            }
+            p {
+                color: #475569 !important;
+            }
+            .day-header {
+                border: 1px solid #e2e8f0 !important;
+                color: #475569 !important;
+            }
+            .task-label {
+                border-right: 1px solid #e2e8f0 !important;
+                color: #0f172a !important;
+            }
+            .phase-badge {
+                color: #4f46e5 !important;
+            }
+            .gantt-bar {
+                box-shadow: none !important;
+                border: 1px solid rgba(0, 0, 0, 0.1) !important;
+            }
+            .gantt-progress {
+                background: rgba(0, 0, 0, 0.08) !important;
+                border-right: 1px solid rgba(0, 0, 0, 0.15) !important;
+            }
+            .gantt-bar-text {
+                color: #ffffff !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>${project.name}</h1>
+            <p>${project.description}</p>
+        </header>
+        <div class="gantt-chart">
+            <div class="header-spacer">Timeline Tasks</div>
+${headerDaysHtml}            
+${taskItemsHtml}        </div>
+    </div>
+</body>
+</html>`;
+        }
+
+        // Mobile Sidebar Controls
+        const sidebarEl = document.getElementById("sidebar");
+        const btnMenuToggle = document.getElementById("btnMenuToggle");
+        const btnSidebarClose = document.getElementById("btnSidebarClose");
+        const sidebarOverlay = document.getElementById("sidebarOverlay");
+
+        btnMenuToggle.addEventListener("click", () => {
+            sidebarEl.classList.add("active");
+            sidebarOverlay.classList.add("active");
+        });
+
+        btnSidebarClose.addEventListener("click", () => {
+            sidebarEl.classList.remove("active");
+            sidebarOverlay.classList.remove("active");
+        });
+
+        sidebarOverlay.addEventListener("click", () => {
+            sidebarEl.classList.remove("active");
+            sidebarOverlay.classList.remove("active");
+        });
+
+        // Window startup
+        window.addEventListener("DOMContentLoaded", () => {
+            initState();
+            renderProjectsSidebar();
+            renderDashboard();
+        });
+    </script>
+</body>
+</html>

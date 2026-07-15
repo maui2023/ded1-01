@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luxury Gantt Chart & Timeline Planner — Android Application</title>
+    <meta name="description" content="A premium native Android timeline planner built with Jetpack Compose, Room Database, and full glassmorphic styling. Export interactive HTML/PDF schedules easily.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Color Palette and Root Variables */
+        :root {
+            --bg-dark: #0b0f19;
+            --surface-obsidian: rgba(15, 23, 42, 0.45);
+            --surface-obsidian-elevated: rgba(30, 41, 59, 0.6);
+            --border-glow: rgba(255, 255, 255, 0.08);
+            --border-glow-active: rgba(255, 255, 255, 0.2);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --neon-violet: #8b5cf6;
+            --neon-pink: #ec4899;
+            --neon-blue: #3b82f6;
+            --neon-green: #10b981;
+            --neon-amber: #f59e0b;
+            --font-display: 'Outfit', sans-serif;
+            --font-body: 'Plus Jakarta Sans', sans-serif;
+            --font-mono: 'Fira Code', monospace;
+            --transition-smooth: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* Base Resets */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            overflow-x: hidden;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 99px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Ambient Backdrop Glows */
+        .ambient-glow {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+            filter: blur(140px);
+            opacity: 0.12;
+            transition: var(--transition-smooth);
+        }
+        .glow-1 {
+            background: var(--neon-violet);
+            top: -10%;
+            left: 5%;
+            animation: floatGlow1 20s infinite alternate;
+        }
+        .glow-2 {
+            background: var(--neon-pink);
+            top: 40%;
+            right: -10%;
+            animation: floatGlow2 25s infinite alternate;
+        }
+        .glow-3 {
+            background: var(--neon-blue);
+            bottom: -5%;
+            left: 15%;
+            animation: floatGlow1 18s infinite alternate-reverse;
+        }
+
+        @keyframes floatGlow1 {
+            0% { transform: translate(0, 0) scale(1); opacity: 0.1; }
+            100% { transform: translate(80px, 50px) scale(1.15); opacity: 0.15; }
+        }
+        @keyframes floatGlow2 {
+            0% { transform: translate(0, 0) scale(1.1); opacity: 0.08; }
+            100% { transform: translate(-100px, -60px) scale(0.9); opacity: 0.14; }
+        }
+
+        /* Header Navigation */
+        header.site-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 80px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 80px;
+            z-index: 100;
+            background: rgba(11, 15, 25, 0.65);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            transition: var(--transition-smooth);
+        }
+        @media(max-width: 768px) {
+            header.site-nav {
+                padding: 0 24px;
+                height: 70px;
+            }
+        }
+
+        .logo {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            font-weight: 800;
+            text-decoration: none;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, #ffffff 30%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--neon-violet), var(--neon-pink));
+            border-radius: 8px;
+            display: inline-block;
+            -webkit-text-fill-color: initial;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+        }
+        .logo-icon::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 4px;
+            background: white;
+            border-radius: 2px;
+            top: 14px;
+            left: 8px;
+            box-shadow: 0 6px 0 white, 0 -6px 0 white;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            list-style: none;
+        }
+        @media(max-width: 768px) {
+            .nav-links { display: none; }
+        }
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: var(--transition-smooth);
+        }
+        .nav-links a:hover {
+            color: var(--text-primary);
+            text-shadow: 0 0 10px rgba(167, 139, 250, 0.4);
+        }
+
+        /* Action Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 28px;
+            border-radius: 12px;
+            font-family: var(--font-body);
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-decoration: none;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            gap: 8px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--neon-violet), var(--neon-pink));
+            color: white;
+            border: none;
+            box-shadow: 0 8px 30px rgba(139, 92, 246, 0.3);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 35px rgba(139, 92, 246, 0.5), 0 0 15px rgba(236, 72, 153, 0.3);
+        }
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--text-primary);
+            border: 1px solid var(--border-glow);
+            backdrop-filter: blur(10px);
+        }
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--border-glow-active);
+            transform: translateY(-2px);
+        }
+
+        /* Container & Layout */
+        .wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Hero Section */
+        section.hero {
+            padding: 160px 0 80px 0;
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            align-items: center;
+            gap: 48px;
+            position: relative;
+        }
+        @media(max-width: 992px) {
+            section.hero {
+                grid-template-columns: 1fr;
+                text-align: center;
+                padding-top: 120px;
+            }
+        }
+
+        .hero-content h1 {
+            font-family: var(--font-display);
+            font-size: 4rem;
+            font-weight: 800;
+            line-height: 1.15;
+            letter-spacing: -0.02em;
+            margin-bottom: 24px;
+            background: linear-gradient(to right, #ffffff 40%, #e2e8f0 70%, #d8b4fe 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero-content h1 span {
+            background: linear-gradient(to right, #a78bfa, #f472b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        @media(max-width: 768px) {
+            .hero-content h1 { font-size: 2.75rem; }
+        }
+
+        .hero-content p {
+            font-size: 1.15rem;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+            line-height: 1.7;
+            max-width: 580px;
+        }
+        @media(max-width: 992px) {
+            .hero-content p { margin: 0 auto 40px auto; }
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        @media(max-width: 992px) {
+            .hero-actions { justify-content: center; }
+        }
+
+        /* Interactive Phone Mockup */
+        .mockup-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            perspective: 1000px;
+        }
+
+        .phone-mockup {
+            width: 320px;
+            height: 640px;
+            background: #090d16;
+            border-radius: 40px;
+            border: 10px solid #1e293b;
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.9), 0 0 50px rgba(139, 92, 246, 0.15);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transform: rotateY(-10deg) rotateX(5deg);
+            transition: var(--transition-smooth);
+        }
+        .phone-mockup:hover {
+            transform: rotateY(0deg) rotateX(0deg) scale(1.02);
+            box-shadow: 0 35px 75px -10px rgba(0, 0, 0, 0.95), 0 0 60px rgba(139, 92, 246, 0.3);
+        }
+        
+        /* Phone Camera Cutout */
+        .phone-notch {
+            width: 110px;
+            height: 25px;
+            background: #1e293b;
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            border-bottom-left-radius: 16px;
+            border-bottom-right-radius: 16px;
+            z-index: 10;
+        }
+
+        /* Simulated App Content */
+        .app-screen {
+            padding: 30px 16px 16px 16px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(180deg, #0f172a, #0b0f19);
+            position: relative;
+        }
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            margin-top: 8px;
+        }
+        .app-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #818cf8, #f472b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .app-icon-btn {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .app-icon-btn::after {
+            content: '⋮';
+            color: white;
+            font-size: 0.8rem;
+        }
+
+        /* Mock Selector */
+        .app-selector {
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            margin-bottom: 16px;
+            padding-bottom: 4px;
+            scrollbar-width: none;
+        }
+        .app-selector::-webkit-scrollbar { display: none; }
+        .app-tab {
+            font-size: 0.7rem;
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 8px;
+            white-space: nowrap;
+            color: var(--text-secondary);
+        }
+        .app-tab.active {
+            background: rgba(139, 92, 246, 0.15);
+            border-color: rgba(139, 92, 246, 0.4);
+            color: var(--text-primary);
+        }
+
+        /* Mock Controls */
+        .app-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .app-zoom-toggle {
+            display: flex;
+            background: rgba(255,255,255,0.03);
+            border-radius: 6px;
+            padding: 2px;
+        }
+        .app-zoom-opt {
+            font-size: 0.65rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+        .app-zoom-opt.active {
+            background: var(--neon-violet);
+            color: white;
+        }
+        .app-btn-add {
+            font-size: 0.65rem;
+            background: linear-gradient(135deg, var(--neon-violet), var(--neon-pink));
+            color: white;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        /* Mock Gantt Canvas */
+        .app-gantt-chart {
+            flex: 1;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.04);
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow: hidden;
+        }
+        .app-gantt-header {
+            display: grid;
+            grid-template-columns: 70px repeat(4, 1fr);
+            gap: 2px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            padding-bottom: 4px;
+        }
+        .app-gantt-h-label {
+            font-size: 0.55rem;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+        .app-gantt-h-label:first-child { text-align: left; }
+        
+        .app-gantt-row {
+            display: grid;
+            grid-template-columns: 70px 1fr;
+            align-items: center;
+            height: 24px;
+        }
+        .app-gantt-row-label {
+            font-size: 0.58rem;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding-right: 4px;
+        }
+        .app-gantt-bar-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            height: 100%;
+            align-items: center;
+            position: relative;
+        }
+        .app-gantt-bar {
+            height: 14px;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            font-size: 0.45rem;
+            color: white;
+            font-weight: 700;
+            padding-left: 4px;
+            position: relative;
+            overflow: hidden;
+            animation: barSlideIn 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+            transform: scaleX(0);
+            transform-origin: left;
+        }
+        .app-gantt-progress {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            background: rgba(255,255,255,0.18);
+        }
+        .app-gantt-bar-text {
+            position: relative;
+            z-index: 2;
+        }
+
+        @keyframes barSlideIn {
+            to { opacity: 1; transform: scaleX(1); }
+        }
+
+        /* Mock app bottom sheet drawer */
+        .app-bottom-sheet {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 140px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255,255,255,0.1);
+            border-top-left-radius: 16px;
+            border-top-right-radius: 16px;
+            padding: 12px;
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transform: translateY(100%);
+            transition: var(--transition-smooth);
+        }
+        .app-bottom-sheet.show {
+            transform: translateY(0);
+        }
+        .app-sheet-handle {
+            width: 36px;
+            height: 4px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 2px;
+            margin: 0 auto 4px auto;
+        }
+        .app-sheet-title {
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+        .app-sheet-field {
+            font-size: 0.6rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 6px;
+            border-radius: 6px;
+            color: white;
+        }
+
+        /* Bento Grid Section */
+        section.features {
+            padding: 100px 0;
+        }
+        .section-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+        .section-header h2 {
+            font-family: var(--font-display);
+            font-size: 2.75rem;
+            font-weight: 800;
+            margin-bottom: 16px;
+        }
+        .section-header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            grid-auto-rows: minmax(260px, auto);
+        }
+        @media(max-width: 992px) {
+            .bento-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media(max-width: 768px) {
+            .bento-grid { grid-template-columns: 1fr; }
+        }
+
+        .bento-card {
+            background: var(--surface-obsidian);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glow);
+            border-radius: 24px;
+            padding: 32px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            transition: var(--transition-smooth);
+        }
+        .bento-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at top left, rgba(139, 92, 246, 0.15), transparent 70%);
+            opacity: 0;
+            transition: var(--transition-smooth);
+            z-index: 0;
+        }
+        .bento-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(139, 92, 246, 0.3);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(139, 92, 246, 0.05);
+        }
+        .bento-card:hover::after {
+            opacity: 1;
+        }
+
+        .bento-card-header {
+            position: relative;
+            z-index: 2;
+        }
+        .bento-card-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border-glow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+            color: var(--neon-violet);
+            font-size: 1.5rem;
+            transition: var(--transition-smooth);
+        }
+        .bento-card:hover .bento-card-icon {
+            background: linear-gradient(135deg, var(--neon-violet), var(--neon-pink));
+            color: white;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+            border-color: transparent;
+        }
+
+        .bento-card h3 {
+            font-family: var(--font-display);
+            font-size: 1.35rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            position: relative;
+            z-index: 2;
+        }
+        .bento-card p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Bento grid sizes customization */
+        .bento-colspan-2 {
+            grid-column: span 2;
+        }
+        @media(max-width: 992px) {
+            .bento-colspan-2 { grid-column: span 2; }
+        }
+        @media(max-width: 768px) {
+            .bento-colspan-2 { grid-column: span 1; }
+        }
+
+        /* Showcase Preview in Card */
+        .card-visual-export {
+            background: #0f1422;
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px;
+            margin-top: 20px;
+            padding: 12px;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: #c9d1d9;
+            height: 120px;
+            overflow: hidden;
+            position: relative;
+        }
+        .card-visual-export::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 50%;
+            background: linear-gradient(to top, #0f1422, transparent);
+        }
+        
+        .code-tag-html { color: #ff7b72; }
+        .code-tag-class { color: #79c0ff; }
+        .code-tag-style { color: #a5d6ff; }
+
+        /* Interactive Showcase Grid */
+        .timeline-interactive-showcase {
+            background: rgba(255,255,255,0.02);
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.04);
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .showcase-grid-row {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .showcase-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .showcase-bar {
+            height: 20px;
+            border-radius: 6px;
+            background: var(--neon-blue);
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            position: relative;
+        }
+        .showcase-bar:hover {
+            transform: scale(1.03);
+            filter: brightness(1.1);
+        }
+        .showcase-bar::after {
+            content: attr(data-progress);
+            position: absolute;
+            right: 8px;
+            top: 2px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        /* Showcase Section */
+        section.interactive-showcase {
+            background: radial-gradient(circle at 80% 50%, rgba(139, 92, 246, 0.08), transparent 50%);
+            padding: 80px 0;
+        }
+        
+        .showcase-wrapper {
+            background: var(--surface-obsidian);
+            border: 1px solid var(--border-glow);
+            border-radius: 32px;
+            padding: 60px;
+            display: grid;
+            grid-template-columns: 1fr 1.1fr;
+            gap: 60px;
+            align-items: center;
+        }
+        @media(max-width: 992px) {
+            .showcase-wrapper {
+                grid-template-columns: 1fr;
+                padding: 40px;
+                gap: 40px;
+            }
+        }
+
+        .showcase-text h2 {
+            font-family: var(--font-display);
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+        }
+        .showcase-text p {
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+            line-height: 1.7;
+        }
+
+        /* Mockup of generated proposal preview */
+        .proposal-mockup {
+            background: rgba(255,255,255,0.01);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 16px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+            padding: 24px;
+            backdrop-filter: blur(10px);
+            max-width: 500px;
+            width: 100%;
+            margin: 0 auto;
+        }
+        .proposal-head {
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            padding-bottom: 16px;
+            margin-bottom: 16px;
+        }
+        .proposal-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 4px;
+        }
+        .proposal-desc {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        .proposal-gantt {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .proposal-gantt-row {
+            display: grid;
+            grid-template-columns: 100px 1fr;
+            align-items: center;
+        }
+        .proposal-gantt-label {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+        .proposal-gantt-bar {
+            height: 18px;
+            border-radius: 4px;
+            background: linear-gradient(90deg, var(--neon-violet), var(--neon-pink));
+        }
+
+        /* CTA Section */
+        section.cta {
+            padding: 100px 0;
+            text-align: center;
+            position: relative;
+        }
+        .cta-box {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(236, 72, 153, 0.1));
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 32px;
+            padding: 80px 40px;
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+        }
+        .cta-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, rgba(139, 92, 246, 0.1), transparent 60%);
+            z-index: 0;
+        }
+        .cta-box h2 {
+            font-family: var(--font-display);
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        .cta-box p {
+            color: var(--text-secondary);
+            font-size: 1.15rem;
+            margin-bottom: 40px;
+            max-width: 550px;
+            margin-left: auto;
+            margin-right: auto;
+            position: relative;
+            z-index: 1;
+        }
+        .cta-actions {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        /* Footer */
+        footer {
+            padding: 40px 0;
+            border-top: 1px solid rgba(255,255,255,0.04);
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+        footer p {
+            margin-top: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Ambient Glow Effects -->
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+    <div class="ambient-glow glow-3"></div>
+
+    <!-- Navigation Header -->
+    <header class="site-nav">
+        <a href="#" class="logo">
+            <span class="logo-icon"></span>
+            AuraGantt
+        </a>
+        <ul class="nav-links">
+            <li><a href="#features">Features</a></li>
+            <li><a href="#showcase">Export Center</a></li>
+            <li><a href="demo.html">Interactive Demo</a></li>
+        </ul>
+        <div>
+            <a href="demo.html" class="btn btn-secondary">Launch Demo</a>
+        </div>
+    </header>
+
+    <div class="wrapper">
+        <!-- Hero Section -->
+        <section class="hero" id="home">
+            <div class="hero-content">
+                <h1>Beautiful Timelines.<br><span>Elevated Design.</span></h1>
+                <p>A luxury Gantt Chart and project timeline planner. Visualize your schedules on a sleek Compose interface and instantly export stunning interactive proposals with modern CSS grids.</p>
+                <div class="hero-actions">
+                    <a href="demo.html" class="btn btn-primary">Try Interactive Webapp</a>
+                </div>
+            </div>
+
+            <!-- Simulated Phone App mockup -->
+            <div class="mockup-container">
+                <div class="phone-mockup">
+                    <div class="phone-notch"></div>
+                    <div class="app-screen">
+                        <div class="app-header">
+                            <div class="app-title">Interactive Proposal</div>
+                            <div class="app-icon-btn"></div>
+                        </div>
+
+                        <div class="app-selector">
+                            <div class="app-tab active">Interactive HTML Proposal</div>
+                            <div class="app-tab">Mobile App Design System</div>
+                        </div>
+
+                        <div class="app-controls">
+                            <div class="app-zoom-toggle">
+                                <div class="app-zoom-opt active">Daily</div>
+                                <div class="app-zoom-opt">Weekly</div>
+                            </div>
+                            <button class="app-btn-add">+ Task</button>
+                        </div>
+
+                        <div class="app-gantt-chart">
+                            <div class="app-gantt-header">
+                                <div class="app-gantt-h-label">Timeline</div>
+                                <div class="app-gantt-h-label">D1-D5</div>
+                                <div class="app-gantt-h-label">D6-D10</div>
+                                <div class="app-gantt-h-label">D11-D15</div>
+                                <div class="app-gantt-h-label">D16-D20</div>
+                            </div>
+
+                            <!-- Row 1 -->
+                            <div class="app-gantt-row">
+                                <div class="app-gantt-row-label" style="color: #818cf8;">Kickoff & Plan</div>
+                                <div class="app-gantt-bar-container">
+                                    <div class="app-gantt-bar" style="background: linear-gradient(135deg, #6366F1, #6366F1dd); grid-column: 1 / 2; width: 100%;">
+                                        <div class="app-gantt-progress" style="width: 100%;"></div>
+                                        <span class="app-gantt-bar-text">100%</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Row 2 -->
+                            <div class="app-gantt-row">
+                                <div class="app-gantt-row-label" style="color: #a78bfa;">UI Wireframes</div>
+                                <div class="app-gantt-bar-container">
+                                    <div class="app-gantt-bar" style="background: linear-gradient(135deg, #8B5CF6, #8B5CF6dd); grid-column: 1 / 3; width: 100%; animation-delay: 0.1s;">
+                                        <div class="app-gantt-progress" style="width: 85%;"></div>
+                                        <span class="app-gantt-bar-text">85%</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Row 3 -->
+                            <div class="app-gantt-row">
+                                <div class="app-gantt-row-label" style="color: #ec4899;">Styling System</div>
+                                <div class="app-gantt-bar-container">
+                                    <div class="app-gantt-bar" style="background: linear-gradient(135deg, #EC4899, #EC4899dd); grid-column: 2 / 4; width: 100%; animation-delay: 0.2s;">
+                                        <div class="app-gantt-progress" style="width: 50%;"></div>
+                                        <span class="app-gantt-bar-text">50%</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Row 4 -->
+                            <div class="app-gantt-row">
+                                <div class="app-gantt-row-label" style="color: #3b82f6;">Grid System</div>
+                                <div class="app-gantt-bar-container">
+                                    <div class="app-gantt-bar" style="background: linear-gradient(135deg, #3B82F6, #3B82F6dd); grid-column: 3 / 5; width: 100%; animation-delay: 0.3s;">
+                                        <div class="app-gantt-progress" style="width: 10%;"></div>
+                                        <span class="app-gantt-bar-text">10%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Mini simulated sheet -->
+                        <div class="app-bottom-sheet show">
+                            <div class="app-sheet-handle"></div>
+                            <div class="app-sheet-title">Edit Task: UI Wireframes</div>
+                            <input type="text" class="app-sheet-field" value="User Experience Architecture" readonly>
+                            <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.6rem;">
+                                <span>Duration: 6 Days</span>
+                                <span>Progress: 85%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Bento Grid Features Section -->
+        <section class="features" id="features">
+            <div class="section-header">
+                <h2>Engineered for visual clarity</h2>
+                <p>Every pixel structured for luxury presentation. AuraGantt handles timeline complexity behind a clean, premium developer experience.</p>
+            </div>
+
+            <div class="bento-grid">
+                <!-- Bento 1: Timelines -->
+                <div class="bento-card">
+                    <div class="bento-card-header">
+                        <div class="bento-card-icon">📊</div>
+                        <h3>Dynamic Grid Timeline</h3>
+                        <p>Toggle fluidly between daily schedules and high-level weekly summaries. Grid columns recalculate on-the-fly, distributing tasks beautifully across resources.</p>
+                    </div>
+                </div>
+
+                <!-- Bento 2: Code Export -->
+                <div class="bento-card bento-colspan-2">
+                    <div class="bento-card-header">
+                        <div class="bento-card-icon">⚡</div>
+                        <h3>Instant Proposal HTML Export</h3>
+                        <p>Generate a fully styled, self-contained HTML page representing your timeline proposal. Instantly printable to PDF, formatted with Plus Jakarta Sans and gorgeous responsive CSS grid alignments.</p>
+                    </div>
+                    <div class="card-visual-export">
+                        <span class="code-tag-html">&lt;!DOCTYPE html&gt;</span><br>
+                        <span class="code-tag-html">&lt;html</span> <span class="code-tag-class">lang=</span><span class="code-tag-style">"en"</span><span class="code-tag-html">&gt;</span><br>
+                        <span class="code-tag-html">&lt;style&gt;</span><br>
+                        &nbsp;&nbsp;.gantt-chart { <span class="code-tag-class">display:</span> grid; <span class="code-tag-class">grid-template-columns:</span> 180px repeat(20, 1fr); }<br>
+                        &nbsp;&nbsp;.gantt-bar { <span class="code-tag-class">background:</span> linear-gradient(135deg, #8B5CF6, #EC4899); }<br>
+                        <span class="code-tag-html">&lt;/style&gt;</span>
+                    </div>
+                </div>
+
+                <!-- Bento 3: Offline room -->
+                <div class="bento-card bento-colspan-2">
+                    <div class="bento-card-header">
+                        <div class="bento-card-icon">🔒</div>
+                        <h3>Offline-First Persistence</h3>
+                        <p>Powered by Room database mapping. Your timelines survive app closes, state changes, and updates. Experience instantaneous local queries without blocking network overhead.</p>
+                    </div>
+                    <div class="timeline-interactive-showcase">
+                        <div class="showcase-grid-row">
+                            <div class="showcase-label" style="color: var(--neon-violet)">Database Model</div>
+                            <div class="showcase-bar" style="width: 90%; background: linear-gradient(to right, var(--neon-violet), var(--neon-pink))" data-progress="Room DB"></div>
+                        </div>
+                        <div class="showcase-grid-row">
+                            <div class="showcase-label" style="color: var(--neon-blue)">App State Flow</div>
+                            <div class="showcase-bar" style="width: 75%; background: linear-gradient(to right, var(--neon-blue), var(--neon-violet))" data-progress="StateFlow"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bento 4: M3 Theme -->
+                <div class="bento-card">
+                    <div class="bento-card-header">
+                        <div class="bento-card-icon">🎨</div>
+                        <h3>Luxury UI Theme</h3>
+                        <p>No generic themes. Uses custom obsidian-dark palettes, glassmorphic surface decorators, and radial glowing accents for high-fidelity luxury presentation.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Showcase Section -->
+        <section class="interactive-showcase" id="showcase">
+            <div class="showcase-wrapper">
+                <div class="showcase-text">
+                    <h2>Impress clients with native HTML/PDF exports</h2>
+                    <p>Stop sending messy screenshots. Generate a beautiful, interactive proposal template that renders perfectly on desktops, tablets, and physical A4 layouts. Formatted specifically to impress project stakeholders.</p>
+                    <div style="display:flex; gap: 20px;">
+                        <div>
+                            <h4 style="color:var(--text-primary); margin-bottom:4px; font-weight:700;">Zero-Dependency</h4>
+                            <p style="font-size:0.85rem; color:var(--text-secondary);">Standalone HTML file. Simply attach to emails or open in double-click.</p>
+                        </div>
+                        <div>
+                            <h4 style="color:var(--text-primary); margin-bottom:4px; font-weight:700;">Print-Optimized</h4>
+                            <p style="font-size:0.85rem; color:var(--text-secondary);">Built-in CSS `@media print` media rules auto-format on paper.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="proposal-mockup">
+                    <div class="proposal-head">
+                        <div class="proposal-title">Interactive HTML Proposal</div>
+                        <div class="proposal-desc">Proposal Gantt chart styling system using modern CSS grids.</div>
+                    </div>
+                    <div class="proposal-gantt">
+                        <div class="proposal-gantt-row">
+                            <span class="proposal-gantt-label">Kickoff & Plan</span>
+                            <div class="proposal-gantt-bar" style="width: 100%;"></div>
+                        </div>
+                        <div style="margin-bottom:6px;"></div>
+                        <div class="proposal-gantt-row">
+                            <span class="proposal-gantt-label">UX Architecture</span>
+                            <div class="proposal-gantt-bar" style="width: 80%; background: linear-gradient(90deg, var(--neon-blue), var(--neon-violet));"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Call To Action -->
+        <section class="cta">
+            <div class="cta-box">
+                <h2>Experience AuraGantt</h2>
+                <p>Launch our responsive client-side web application mockup. Add timelines, manipulate tasks, and test the code generator right in your browser.</p>
+                <div class="cta-actions">
+                    <a href="demo.html" class="btn btn-primary">Open WebApp Demo</a>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Footer Section -->
+    <footer>
+        <div class="logo" style="justify-content: center; margin-bottom: 12px;">
+            <span class="logo-icon"></span>
+            AuraGantt
+        </div>
+        <p>&copy; 2026 AuraGantt. A premium timeline planning experience.</p>
+    </footer>
+
+    <!-- Interactive script for phone simulation mockup -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const tabs = document.querySelectorAll('.app-tab');
+            const bars = document.querySelectorAll('.app-gantt-bar');
+            const sheet = document.querySelector('.app-bottom-sheet');
+            const titleInput = document.querySelector('.app-sheet-field');
+            const sheetLabels = document.querySelectorAll('.app-bottom-sheet span');
+            
+            // Project details mapping
+            const projectData = {
+                "Interactive HTML Proposal": [
+                    { label: "Kickoff & Plan", width: "100%", offset: "1/2", progress: "100%", color: "#6366F1", duration: "4 Days" },
+                    { label: "UI Wireframes", width: "100%", offset: "1/3", progress: "85%", color: "#8B5CF6", duration: "6 Days" },
+                    { label: "Styling System", width: "100%", offset: "2/4", progress: "50%", color: "#EC4899", duration: "5 Days" },
+                    { label: "Grid System", width: "100%", offset: "3/5", progress: "10%", color: "#3B82F6", duration: "8 Days" }
+                ],
+                "Mobile App Design System": [
+                    { label: "Design System Tokens", width: "100%", offset: "1/2", progress: "100%", color: "#8B5CF6", duration: "5 Days" },
+                    { label: "Glassmorphic Surfaces", width: "100%", offset: "1/3", progress: "90%", color: "#EC4899", duration: "6 Days" },
+                    { label: "Compose Components", width: "100%", offset: "2/4", progress: "50%", color: "#3B82F6", duration: "8 Days" },
+                    { label: "Fluid Motion", width: "100%", offset: "3/5", progress: "10%", color: "#10B981", duration: "7 Days" }
+                ]
+            };
+
+            // Switch Projects Mock
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+
+                    const projName = tab.textContent.trim();
+                    const tasks = projectData[projName];
+                    
+                    // Update gantt rows
+                    const ganttRows = document.querySelectorAll('.app-gantt-row');
+                    tasks.forEach((task, idx) => {
+                        if (ganttRows[idx]) {
+                            const label = ganttRows[idx].querySelector('.app-gantt-row-label');
+                            const barContainer = ganttRows[idx].querySelector('.app-gantt-bar-container');
+                            
+                            label.textContent = task.label;
+                            label.style.color = task.color;
+                            
+                            barContainer.innerHTML = `
+                                <div class="app-gantt-bar" style="background: linear-gradient(135deg, \${task.color}, \${task.color}dd); grid-column: \${task.offset}; width: \${task.width}; opacity: 1; transform: scaleX(1);">
+                                    <div class="app-gantt-progress" style="width: \${task.progress};"></div>
+                                    <span class="app-gantt-bar-text">\${task.progress}</span>
+                                </div>
+                            `;
+                        }
+                    });
+
+                    // Update bottom sheet with first task
+                    updateBottomSheet(tasks[0].label, tasks[0].duration, tasks[0].progress);
+                });
+            });
+
+            // Help update bottom sheet
+            function updateBottomSheet(title, duration, progress) {
+                titleInput.value = title;
+                sheetLabels[0].textContent = `Duration: \${duration}`;
+                sheetLabels[1].textContent = `Progress: \${progress}`;
+            }
+
+            // Click tasks inside simulated device to show details in bottom sheet
+            document.querySelector('.app-gantt-chart').addEventListener('click', (e) => {
+                const bar = e.target.closest('.app-gantt-bar');
+                if (bar) {
+                    const row = bar.closest('.app-gantt-row');
+                    const label = row.querySelector('.app-gantt-row-label').textContent.trim();
+                    const progress = bar.querySelector('.app-gantt-progress').style.width;
+                    
+                    // Lookup project data to find duration
+                    const activeTabName = document.querySelector('.app-tab.active').textContent.trim();
+                    const taskInfo = projectData[activeTabName].find(t => t.label === label);
+                    
+                    if (taskInfo) {
+                        updateBottomSheet(taskInfo.label, taskInfo.duration, progress);
+                    }
+                }
+            });
+
+            // Zoom toggle simulation
+            const zoomOpts = document.querySelectorAll('.app-zoom-opt');
+            zoomOpts.forEach(opt => {
+                opt.addEventListener('click', () => {
+                    zoomOpts.forEach(o => o.classList.remove('active'));
+                    opt.classList.add('active');
+                    
+                    const level = opt.textContent.trim();
+                    const gridHeaders = document.querySelectorAll('.app-gantt-h-label');
+                    
+                    if (level === 'Weekly') {
+                        gridHeaders[1].textContent = 'W1-W2';
+                        gridHeaders[2].textContent = 'W3-W4';
+                        gridHeaders[3].textContent = 'W5-W6';
+                        gridHeaders[4].textContent = 'W7-W8';
+                    } else {
+                        gridHeaders[1].textContent = 'D1-D5';
+                        gridHeaders[2].textContent = 'D6-D10';
+                        gridHeaders[3].textContent = 'D11-D15';
+                        gridHeaders[4].textContent = 'D16-D20';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
