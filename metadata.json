@@ -1,0 +1,6 @@
+{
+  "name": "Gantt Timeline Creator",
+  "description": "An elegant Gantt chart timeline builder with premium typography, smooth gradients, glassmorphism panels, and export simulations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

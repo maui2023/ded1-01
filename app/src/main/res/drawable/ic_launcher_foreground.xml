@@ -1,0 +1,71 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Timeline vertical boundary axis -->
+    <path
+        android:pathData="M24,24 v60"
+        android:strokeColor="#4A5270"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"/>
+
+    <!-- Grid lines -->
+    <path
+        android:pathData="M44,24 v60 M64,24 v60 M84,24 v60"
+        android:strokeColor="#1F2336"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"/>
+
+    <!-- Task Bar 1 (Top) -->
+    <path
+        android:pathData="M30,32 h36 c2.76,0 5,2.24 5,5 c0,2.76 -2.24,5 -5,5 h-36 c-2.76,0 -5,-2.24 -5,-5 c0,-2.76 2.24,-5 5,-5 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="25"
+                android:startY="37"
+                android:endX="71"
+                android:endY="37"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#6366F1" />
+                <item android:offset="1.0" android:color="#8B5CF6" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Task Bar 2 (Middle) -->
+    <path
+        android:pathData="M48,47 h34 c2.76,0 5,2.24 5,5 c0,2.76 -2.24,5 -5,5 h-34 c-2.76,0 -5,-2.24 -5,-5 c0,-2.76 2.24,-5 5,-5 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="43"
+                android:startY="52"
+                android:endX="87"
+                android:endY="52"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#8B5CF6" />
+                <item android:offset="1.0" android:color="#EC4899" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Task Bar 3 (Bottom) -->
+    <path
+        android:pathData="M36,62 h30 c2.76,0 5,2.24 5,5 c0,2.76 -2.24,5 -5,5 h-30 c-2.76,0 -5,-2.24 -5,-5 c0,-2.76 2.24,-5 5,-5 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="31"
+                android:startY="67"
+                android:endX="71"
+                android:endY="67"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#3B82F6" />
+                <item android:offset="1.0" android:color="#10B981" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+</vector>
+
